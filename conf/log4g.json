@@ -1,0 +1,10 @@
+{
+  "pattern":"file",
+  "filename":"/var/log/estor.log",
+  "logLevel":"INFO",
+  "rotate":true,
+  "maxsize":256,
+  "maxdays":90,
+  "maxTotalSize":10240,
+  "daily": true
+}
