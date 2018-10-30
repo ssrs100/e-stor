@@ -1,7 +1,6 @@
 package estor
 
 import (
-	"context"
 	"estor/controller"
 	"estor/utils"
 	"fmt"
@@ -10,10 +9,8 @@ import (
 	"github.com/ssrs100/logs"
 	"net/http"
 	"os"
-	"os/signal"
 	"path/filepath"
 	"strconv"
-	"time"
 )
 
 var (
@@ -26,6 +23,7 @@ var (
 type Server struct {
 	configure *conf.Config
 }
+
 var s Server
 
 func (s *Server) RegisterRoutes() *httprouter.Router {
@@ -42,12 +40,12 @@ func (s *Server) RegisterRoutes() *httprouter.Router {
 	// Set the routes for the application.
 
 	// Route for health check
-	router.Handler("GET", "/es/heart", controller.HealthCheck)
+	router.GET("/es/heart", controller.HealthCheck)
 
 	// Routes for users
-	router.Handler("GET", "/es/v1/users", controller.GetUsers)
-	router.Handler("POST", "/es/v1/users", controller.CreateUser)
-	router.Handler("DELETE", "/es/v1/users", controller.DeleteUser)
+	router.GET("/es/v1/users", controller.GetUsers)
+	router.POST("/es/v1/users", controller.CreateUser)
+	router.DELETE("/es/v1/users/:username", controller.DeleteUser)
 
 	return router
 }
@@ -79,30 +77,11 @@ func Start() error {
 	port := s.configure.GetInt("port")
 	server := &http.Server{Addr: host + ":" + strconv.Itoa(port), Handler: router}
 
-	log.Debug("Starting server on port %s", port)
+	log.Debug("Starting server on port %d", port)
 
-	go func() {
-		err := server.ListenAndServeTLS(s.configure.GetString("cert"), s.configure.GetString("key"))
-		if err != nil {
-			log.Fatal("ListenAndServeTLS: ", err)
-		}
-	}()
-
-
-	signal.Notify(stop, os.Interrupt)
-
-	log.Warn("After notify...")
-
-	<-stop // wait for SIGINT
-
-	log.Warn("Shutting down server...")
-
-	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second) // shut down gracefully, but wait no longer than 45 seconds before halting.
-
-	defer cancel()
-
-	if err := server.Shutdown(ctx); err != nil {
-		log.Fatal(err.Error())
+	err := server.ListenAndServeTLS(s.configure.GetString("cert"), s.configure.GetString("key"))
+	if err != nil {
+		log.Fatal("ListenAndServeTLS: ", err)
 	}
 
 	return nil
