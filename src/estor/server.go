@@ -26,7 +26,7 @@ var (
 type Server struct {
 	configure *conf.Config
 }
-
+var s Server
 
 func (s *Server) RegisterRoutes() *httprouter.Router {
 	log.Debug("Setting route info...")
@@ -55,7 +55,7 @@ func (s *Server) RegisterRoutes() *httprouter.Router {
 var stop = make(chan os.Signal)
 
 // Start sets up and starts the main server application
-func Start(s Server) error {
+func Start() error {
 	log.Info("Setting up server...")
 
 	basedir := utils.GetAppBaseDir()
